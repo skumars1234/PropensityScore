@@ -27,7 +27,7 @@ This page details about the Solution Architecture of Cytora - PropensityScore.
 
 **Architecture flow:**
 
-&nbsp;1.&nbsp;	User: The user initiates a request to the microservice application.
+&nbsp;1.&nbsp;	Cytora: Initiates a request to the endpoint shared by Allianz.
 
 &nbsp;2.&nbsp;	APIGEE Proxy Layer: The request first hits the APIGEE proxy layer. APIGEE acts as an API gateway, handling tasks like authentication, authorization, rate limiting, and request transformation.
 
