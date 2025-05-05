@@ -126,7 +126,7 @@ Before you begin, ensure you have the following:
     ```
     You should see both your application container and the `istio-proxy` container listed.
 
-### 7. Configure Istio Resources
+### 6. Configure Istio Resources
 
 * Start configuring Istio resources to manage traffic, security, and routing. Examples include:
 
@@ -174,7 +174,7 @@ Before you begin, ensure you have the following:
 
         Apply this using ```kubectl apply -f propensity-score-dr.yaml.```
 
-### 8. Configure Istio Ingress Gateway for External Access (Traffic from Apigee):    
+### 7. Configure Istio Ingress Gateway for External Access (Traffic from Apigee):    
 
 * You need to configure an Istio Gateway in the istio-system namespace (or your chosen gateway namespace) to define how traffic from Apigee will enter the Istio service mesh.
     * Gateway ```(apigee-ingress-gateway.yaml)```:
@@ -233,7 +233,7 @@ Before you begin, ensure you have the following:
             kubectl apply -f propensity-vs-ingress.yaml
         ```
 
-### 9. Configure Apigee API Proxy Target Endpoint:
+### 8. Configure Apigee API Proxy Target Endpoint:
 
 * This is the crucial change. Instead of pointing your Apigee API proxy's target endpoint directly to your "propensity-score" microservice's Kubernetes service IP or an external Load Balancer for the service, you will now point it to the external IP address or DNS name of your Istio Ingress Gateway.
 
@@ -262,11 +262,11 @@ Before you begin, ensure you have the following:
     * Headers: Apigee might forward certain headers that your Istio setup or microservice expects (e.g., host header if using virtual hosts). Ensure these are correctly passed through.
     * TLS (HTTPS): If you want secure communication between Apigee and the Istio Ingress Gateway, you'll need to configure TLS on the Istio Gateway (as shown in the apigee-ingress-gateway.yaml example) and configure your Apigee target endpoint to use HTTPS and trust the certificate presented by the Istio Ingress Gateway.
 
-### 10. Authentication and Authorization in Apigee:
+### 9. Authentication and Authorization in Apigee:
 
 * You will likely handle external-facing authentication and authorization policies within your Apigee API proxy, as you originally intended. Apigee will verify credentials before forwarding the request to the Istio Ingress Gateway. Istio can then handle further internal security policies (e.g., mTLS, fine-grained authorization within the mesh).
 
-### 11. Monitor and Test:
+### 10. Monitor and Test:
 
 * Test the entire flow: User -> Apigee Proxy -> Istio Ingress Gateway -> Envoy Sidecar -> "propensity-score" Microservice.
 * Monitor both Apigee and Istio components to ensure traffic is flowing correctly and policies are being enforced.
