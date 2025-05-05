@@ -1,7 +1,7 @@
 
 # Cytora - PropensityScore : Solution Architecture
 
-This page details about the architecture of Cytora - PropensityScore.
+This page details about the Solution Architecture of Cytora - PropensityScore.
 
 
 
