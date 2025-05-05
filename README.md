@@ -57,6 +57,122 @@ Before you begin, ensure you have the following:
 * **`istioctl`:** Istio command-line tool. Follow the instructions on the official Istio website to download and install it: [https://istio.io/latest/docs/setup/install/istioctl/](https://istio.io/latest/docs/setup/install/istioctl/). Make sure to add `istioctl` to your system's PATH.
 * **"propensity-score"** Microservice Deployed: Your "propensity-score" microservice should already be deployed in a Kubernetes namespace (let's assume it's in the propensity-ns namespace for this example).
 
+## Step-by-Step Implementation
+
+### 1. Download and Install Istio
+
+* Download the latest stable Istio release:
+    ```bash
+    curl -L [https://istio.io/downloadIstio](https://istio.io/downloadIstio) | sh -
+    ```
+    This will download the Istio release into a directory named `istio-<version>`.
+
+* Navigate to the Istio directory:
+    ```bash
+    cd istio-*
+    ```
+
+* Add the `istioctl` client to your PATH (it's recommended to add this to your shell configuration file):
+    ```bash
+    export PATH=$PWD/bin:$PATH
+    ```
+
+### 2. Install Istio Core Components on AKS
+
+* Choose an Istio installation profile. The `default` profile is recommended for most use cases.
+* Install Istio using `istioctl`:
+    ```bash
+    istioctl install --set profile=default -y
+    ```
+    This command deploys the core Istio control plane components (e.g., `istiod`) to the `istio-system` namespace.
+
+* Verify the installation:
+    ```bash
+    kubectl get pods -n istio-system
+    ```
+    Ensure the Istio control plane pods are in a `Running` or `Completed` state.
+
+### 3. Label the Kubernetes Namespace for Automatic Sidecar Injection
+
+* Label the namespace where your microservices are deployed to enable automatic Envoy sidecar injection. Replace `<your-namespace>` with the actual namespace name (e.g., `default` or `my-app`).
+    ```bash
+    kubectl label namespace <your-namespace> istio-injection=enabled
+    ```
+    Example for a namespace named `my-app`:
+    ```bash
+    kubectl label namespace my-app istio-injection=enabled
+    ```
+
+### 4. Deploy or Redeploy Your Microservices
+
+* If your microservices are already running, you need to **redeploy** them to inject the Envoy sidecar proxies. You can achieve this by:
+    * Deleting and reapplying your deployment manifests.
+    * Performing a rolling update:
+        ```bash
+        kubectl rollout restart deployment -n <your-namespace> <your-deployment-name>
+        ```
+* New microservices deployed after labeling the namespace will automatically have the Envoy sidecar injected.
+
+### 5. Verify Sidecar Injection
+
+* Confirm that the Envoy sidecar containers are running in your microservice pods:
+    ```bash
+    kubectl get pods -n <your-namespace> -o yaml | grep -o 'sidecar.istio.io/inject: "true"'
+    ```
+    Alternatively, inspect a specific pod's details:
+    ```bash
+    kubectl describe pod -n <your-namespace> <your-pod-name> | grep -A 2 Containers:
+    ```
+    You should see both your application container and the `istio-proxy` container listed.
+
+### 7. Configure Istio Resources
+
+* Start configuring Istio resources to manage traffic, security, and routing. Examples include:
+
+    * Now that the Envoy sidecar is running with your "propensity-score" microservice, you can start configuring Istio resources to manage its traffic, security, and observability. Here are some common configurations you might need:
+      * Service: Ensure you have a Kubernetes Service defined for your "propensity-score" microservice in the propensity-ns namespace. Istio uses this service registry.
+       
+        ``` bash
+        kubectl get svc -n propensity-ns propensity-score-service
+        ```
+        Replace ```propensity-score-service ``` with the actual name of your service.
+
+      * VirtualService (for Routing and Traffic Management): If you need to control how traffic is routed to different versions of your "propensity-score" service, implement traffic splitting, or define specific routing rules based on headers, etc., you'll create a virtual service.
+        ``` YAML
+            apiVersion: networking.istio.io/v1alpha3
+            kind: VirtualService
+            metadata:
+                name: propensity-score-vs
+                namespace: propensity-ns
+            spec:
+                hosts:
+                - "propensity-score" # The Kubernetes service name
+                http:
+                - route:
+                    - destination:
+                        host: propensity-score
+                        port:
+                        number: <your-service-port> # e.g., 8080
+          ```
+        Apply this using ```kubectl apply -f propensity-score-vs.yaml.```
+
+      * DestinationRule (for Load Balancing and Traffic Policies): Configure load balancing algorithms, connection pool settings, and TLS settings for traffic to your "propensity-score" service.
+
+        ```
+            apiVersion: networking.istio.io/v1alpha3
+            kind: DestinationRule
+            metadata:
+                name: propensity-score-dr
+                namespace: propensity-ns
+            spec:
+                host: propensity-score
+                trafficPolicy:
+                    loadBalancer:
+                        simple: ROUND_ROBIN # Example load balancing policy
+        ```
+
+        Apply this using ```kubectl apply -f propensity-score-dr.yaml.```
+
 
 ## Authors
 
