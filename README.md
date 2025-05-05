@@ -40,7 +40,22 @@ Main components in this architecture:
 
 &nbsp;7.&nbsp; Response Flow: The response from the microservice follows the reverse path, going through the Envoy proxy, Istio Ingress Gateway, APIGEE, and finally back to the user.
 
+# Configuring Istio on Azure Kubernetes Service (AKS)
 
+This document provides step-by-step guidelines for installing and configuring Istio & Envoy on an Azure Kubernetes Service (AKS) cluster. 
+## Prerequisites
+
+Before you begin, ensure you have the following:
+
+* **Azure Subscription:** An active Azure subscription.
+* **AKS Cluster:** An existing and running AKS cluster. If you don't have one, you'll need to create it first.
+* **`kubectl`:** Kubernetes command-line tool installed and configured to connect to your AKS cluster. You can use the Azure CLI to get the cluster credentials:
+    ```bash
+    az aks get-credentials --resource-group <your-resource-group> --name <your-aks-cluster-name>
+    ```
+* **Azure CLI:** Azure command-line interface installed.
+* **`istioctl`:** Istio command-line tool. Follow the instructions on the official Istio website to download and install it: [https://istio.io/latest/docs/setup/install/istioctl/](https://istio.io/latest/docs/setup/install/istioctl/). Make sure to add `istioctl` to your system's PATH.
+* **"propensity-score"** Microservice Deployed: Your "propensity-score" microservice should already be deployed in a Kubernetes namespace (let's assume it's in the propensity-ns namespace for this example).
 
 
 ## Authors
