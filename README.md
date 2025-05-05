@@ -11,19 +11,19 @@ This page details about the architecture of Cytora - PropensityScore.
 
 <img width="1430" alt="image" src="https://github.com/user-attachments/assets/3eb82326-b317-4bdd-ad9a-884b3e2dd25b" />
 
-Main components in this architecture:
+**Main components in this architecture:**
 
-•	**Cytora** Third party service from which Allianz API receives the call.
+•	**Cytora** : Third party service from which Allianz API receives the request.
 
-•	**APIGEE** manages external API access and provides API management capabilities.
+•	**APIGEE** : Manages external API access and provides API management capabilities.
 
-•	**AKS** provides the Kubernetes platform for deploying and managing the microservices.
+•	**AKS** Provides the Kubernetes platform for deploying and managing the microservices.
 
-•	**Istio** provides the service mesh layer for managing traffic, security, and observability within the AKS cluster.
+•	**Istio** : Provides the service mesh layer for managing traffic, security, and observability within the AKS cluster.
 
-•	**Envoy** acts as the data plane, handling the actual network communication between services
+•	**Envoy**  : Acts as the data plane, handling the actual network communication between services
 
-•	**ML Service** The Azure ML service which actually provides the propensity score value.
+•	**ML Service** : The Azure ML service which actually provides the propensity score value.
 
 **Architecture flow:**
 
