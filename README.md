@@ -173,6 +173,119 @@ Before you begin, ensure you have the following:
 
         Apply this using ```kubectl apply -f propensity-score-dr.yaml.```
 
+### 8. Configure Istio Ingress Gateway for External Access (Traffic from Apigee):    
+
+* You need to configure an Istio Gateway in the istio-system namespace (or your chosen gateway namespace) to define how traffic from Apigee will enter the Istio service mesh.
+    * Gateway ```(apigee-ingress-gateway.yaml)```:
+
+        ```
+            apiVersion: networking.istio.io/v1alpha3
+            kind: Gateway
+            metadata:
+                name: apigee-ingress-gateway
+                namespace: istio-system
+            spec:
+                selector:
+                    istio: ingressgateway # Use the default Istio Ingress Gateway
+                servers:
+                - port:
+                    number: 80 # or 443 for HTTPS
+                    name: http # or https
+                    protocol: HTTP # or HTTPS
+                  hosts:
+                    - "propensity.your-apigee-domain.com" # A domain Apigee will use
+                    # If using HTTPS, configure TLS here
+                    # tls:
+                    #   mode: SIMPLE
+                    #   credentialName: apigee-cert
+
+        ```
+
+    Replace ```"propensity.your-apigee-domain.com" ```with a domain or hostname that you will configure in your Apigee target endpoint.
+
+    * VirtualService for Ingress ```(propensity-vs-ingress.yaml)```:
+
+        You'll also need a VirtualService in the namespace of your "propensity-score" service (propensity-ns in this case) to route traffic coming from the apigee-ingress-gateway to your "propensity-score" service.
+        ```
+        apiVersion: networking.istio.io/v1alpha3
+        kind: VirtualService
+        metadata:
+            name: propensity-vs-ingress
+            namespace: propensity-ns
+        spec:
+            hosts:
+            - "propensity.your-apigee-domain.com" # Must match the Gateway's hosts
+            gateways:
+            - istio-system/apigee-ingress-gateway
+            http:
+            - route:
+                - destination:
+                    host: propensity-score # Kubernetes service name
+                    port:
+                    number: <your-service-port>
+
+        ```
+
+        Apply these Istio Ingress resources:
+        ```
+            kubectl apply -f apigee-ingress-gateway.yaml
+            kubectl apply -f propensity-vs-ingress.yaml
+        ```
+
+### 9. Configure Apigee API Proxy Target Endpoint:
+
+* This is the crucial change. Instead of pointing your Apigee API proxy's target endpoint directly to your "propensity-score" microservice's Kubernetes service IP or an external Load Balancer for the service, you will now point it to the external IP address or DNS name of your Istio Ingress Gateway.
+
+    * Get the External IP of the Istio Ingress Gateway:
+
+      ``` 
+      kubectl get service -n istio-system istio-ingressgateway -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 
+      ```
+
+      If your Ingress Gateway is exposed via a DNS name, use that instead.
+    * Configure Apigee Target Endpoint:
+
+        In your Apigee API proxy configuration, update the target endpoint URL to something like:
+        ```
+        http://<Istio-Ingress-Gateway-IP>:<Gateway-Server-Port>/
+        ```
+
+        or if you configured a specific hostname in the Istio Gateway:
+        ```
+        http://propensity.your-apigee-domain.com/
+        ```
+
+    #### Important Considerations for Apigee Target Endpoint:
+
+    * Path: Ensure the path configured in your Apigee proxy matches the paths handled by your "propensity-score" microservice. You might need to configure path rewriting in either Apigee or the Istio VirtualService if they don't align.
+    * Headers: Apigee might forward certain headers that your Istio setup or microservice expects (e.g., host header if using virtual hosts). Ensure these are correctly passed through.
+    * TLS (HTTPS): If you want secure communication between Apigee and the Istio Ingress Gateway, you'll need to configure TLS on the Istio Gateway (as shown in the apigee-ingress-gateway.yaml example) and configure your Apigee target endpoint to use HTTPS and trust the certificate presented by the Istio Ingress Gateway.
+
+### 10. Authentication and Authorization in Apigee:
+
+* You will likely handle external-facing authentication and authorization policies within your Apigee API proxy, as you originally intended. Apigee will verify credentials before forwarding the request to the Istio Ingress Gateway. Istio can then handle further internal security policies (e.g., mTLS, fine-grained authorization within the mesh).
+
+### 11. Monitor and Test:
+
+* Test the entire flow: User -> Apigee Proxy -> Istio Ingress Gateway -> Envoy Sidecar -> "propensity-score" Microservice.
+* Monitor both Apigee and Istio components to ensure traffic is flowing correctly and policies are being enforced.
+
+### Summary of Changes:
+
+* **Istio Ingress Gateway as the Entry Point:** Apigee now directs traffic to the Istio Ingress Gateway instead of directly to your microservice.
+* **Istio Gateway and VirtualService for Ingress:** You need to configure these Istio resources to define how traffic from Apigee enters the service mesh and is routed to your "propensity-score" service.
+* **Apigee Target Endpoint Update:** The target endpoint in your Apigee API proxy must be updated to point to the Istio Ingress Gateway's external address and the appropriate port.
+* **Internal Istio Configuration Remains:** You still configure Istio resources within your microservice's namespace for internal traffic management and policies.
+
+## Important Considerations
+
+* **Resource Requirements:** Istio and its sidecars consume resources. Monitor your cluster's resource usage.
+* **Security:** Implement RBAC policies and network policies for enhanced security.
+* **Upgrades:** Follow the official Istio upgrade documentation for seamless upgrades.
+* **Complexity:** Understand the concepts and complexity introduced by Istio.
+* **Performance Overhead:** Be aware of potential (though generally small) latency introduced by the sidecars. Test your application performance.
+
+This README provides a comprehensive guide to configuring Istio on your AKS cluster. 
 
 ## Authors
 
