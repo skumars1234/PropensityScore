@@ -41,9 +41,9 @@ This page details about the architecture of Cytora - PropensityScore.
 
 &nbsp;7.&nbsp; Response Flow: The response from the microservice follows the reverse path, going through the Envoy proxy, Istio Ingress Gateway, APIGEE, and finally back to the user.
 
-# Configuring Istio on Azure Kubernetes Service (AKS)
+# Configuring Istio-Envoy on Azure Kubernetes Service (AKS)
 
-This document provides step-by-step guidelines for installing and configuring Istio & Envoy on an Azure Kubernetes Service (AKS) cluster. 
+This document provides step-by-step guidelines for installing and configuring Istio & Envoy on an Azure Kubernetes Service (AKS) cluster which receives requests from an APIGEE proxy layer. 
 ## Prerequisites
 
 Before you begin, ensure you have the following:
